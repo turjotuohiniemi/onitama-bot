@@ -5,13 +5,14 @@
 #include "board.h"
 #include "gameplay.h"
 
-extern int vd_counter;
-
 int opponent_move(struct board *b, struct gamestate *g) {
     char cardname[30];
     int fromx, fromy, tox, toy;
     printf("Your move (card nn,nn nn,nn)? ");
     switch (scanf("%20s %d,%d %d,%d", cardname, &fromx, &fromy, &tox, &toy)) {
+        case -1:
+            putchar('\n');
+            // pass trough
         case 0:
             exit(EXIT_SUCCESS);
         case 5:
@@ -51,7 +52,7 @@ int main(int argc, char *argv[]) {
                    movefrom.x, movefrom.y, movefrom.x + movediff.x, movefrom.y + movediff.y);
             register_pawn_move(b, g, movefrom.x, movefrom.y, movefrom.x + movediff.x,
                                movefrom.y + movediff.y, cardname);
-            print_board(b);
+            print_board(b, 0);
             dump_gamestate(g);
         }
         while (opponent_move(b, g) == -1) {

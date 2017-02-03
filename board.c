@@ -40,12 +40,19 @@ static int check_board_integrity(struct board *b) {
     return pawns;
 }
 
-void print_board(struct board *b) {
+void print_board(struct board *b, int indent) {
     static int legend[8] = {'b', 'r', ' ', '?', 'B', 'R', '?', '?'};
     static int pawncn[8] = {  1,   1,   0, -99,   1,   1, -99, -99};
     int pawns = 0;
+    for (int x = 0; x < indent; ++x) {
+        putchar(' ');
+    }
+    printf("  01234\n");
     for (int y = 0; y < BOARD_DIM; ++y) {
-        printf("%d  ", y);
+        for (int x = 0; x < indent; ++x) {
+            putchar(' ');
+        }
+        printf("%d ", y);
         for (int x = 0; x < BOARD_DIM; ++x) {
             putchar(legend[b->grid[y][x]]);
             pawns += pawncn[b->grid[y][x]];
