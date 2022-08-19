@@ -46,17 +46,17 @@ void dump_gamestate(struct gamestate *g) {
     printf("Mid-card: %s\n", g->swap_card->name);
 }
 
-static int calc_score(struct board *b, int origplayer) {
+int calc_score(struct board *b, int mycolor) {
     int score = 0;
-    int opponent = origplayer ^ 1;
+    int opponent = mycolor ^ 1;
     for (int y = 0; y < BOARD_DIM; ++y) {
         for (int x = 0; x < BOARD_DIM; ++x) {
-            if ((b->grid[y][x] & PAWN_COLOR_MASK) == origplayer) {
-                score += 5;
-                if ((y > 0 && (b->grid[y - 1][x] & PAWN_COLOR_MASK) != origplayer)
-                 || (x > 0 && (b->grid[y][x - 1] & PAWN_COLOR_MASK) != origplayer)
-                 || (x < BOARD_DIM - 1 && (b->grid[y][x + 1] & PAWN_COLOR_MASK) != origplayer)
-                 || (y < BOARD_DIM - 1 && (b->grid[y + 1][x] & PAWN_COLOR_MASK) != origplayer))
+            if ((b->grid[y][x] & PAWN_COLOR_MASK) == mycolor) {
+                score += 10;
+                if ((y > 0 && (b->grid[y - 1][x] & PAWN_COLOR_MASK) != mycolor)
+                 || (x > 0 && (b->grid[y][x - 1] & PAWN_COLOR_MASK) != mycolor)
+                 || (x < BOARD_DIM - 1 && (b->grid[y][x + 1] & PAWN_COLOR_MASK) != mycolor)
+                 || (y < BOARD_DIM - 1 && (b->grid[y + 1][x] & PAWN_COLOR_MASK) != mycolor))
                 {
                     ++score;
                 }
@@ -69,13 +69,13 @@ static int calc_score(struct board *b, int origplayer) {
 }
 
 int analyze_game(struct coord *movefrom, struct movement *moveto, char **cardname, int depth,
-                 int origplayer, struct gamestate *g, struct board *b)
+                 int mycolor, struct gamestate *g, struct board *b)
 {
     if (depth > MAX_DEPTH) {
-        return calc_score(b, origplayer);
+        return calc_score(b, mycolor);
     }
     int best_score = INT_MIN;
-    int total_score = 0;
+    int worst_score = INT_MAX;
     for (int p = 0; p < PAWNS; ++p) {
         if (b->player_pawn[g->next_turn][p].x == CAPTURED_PAWN_IDX)
             continue;
@@ -93,29 +93,44 @@ int analyze_game(struct coord *movefrom, struct movement *moveto, char **cardnam
                     newg.next_turn ^= 1;
                     newg.swap_card = newg.player_card[g->next_turn][cnum];
                     newg.player_card[g->next_turn][cnum] = g->swap_card;
-                    int score = analyze_game(NULL, NULL, NULL, depth + 1, origplayer, &newg, &newb);
-                    if (depth == 0 && score >= best_score) {
-                        best_score = score;
-                        *movefrom = b->player_pawn[g->next_turn][p];
-                        *moveto = *move;
-                        if (!g->next_turn) {
-                            moveto->x = -moveto->x;
-                            moveto->y = -moveto->y;
-                        }
+                    int subscore = analyze_game(NULL, NULL, NULL, depth + 1, mycolor, &newg,
+                                                &newb);
+                    if (subscore <= worst_score)
+                        worst_score = subscore;
+                    if (subscore >= best_score)
+                        best_score = subscore;
+/*DEBUG*/	    if (1 || depth == 0) printf("/&/ %d @ %d/%d/%d '%s' subscore=%d worst=%d best=%d\n", depth, p, cnum, m, g->player_card[g->next_turn][cnum]->name, subscore, worst_score, best_score);
+/*DEBUG*/	    print_board(&newb, depth * 6);
+                    if (depth == 0 && subscore == best_score) {
+#define REGISTER_MOVE \
+                        *movefrom = b->player_pawn[g->next_turn][p];		\
+                        *moveto = *move; 					\
+                        if (!g->next_turn) { 					\
+                            moveto->x = -moveto->x; 				\
+                            moveto->y = -moveto->y; 				\
+                        }							\
                         *cardname = g->player_card[g->next_turn][cnum]->name;
+                        REGISTER_MOVE
                     }
-                    total_score += score;
                 } else if (res > 0) {
-                    if (g->next_turn == origplayer) {
-                        return 64 + (2 * (MAX_DEPTH - depth));
+                    if (g->next_turn == mycolor) {
+/*DEBUG*/           printf("/&/ %d @ %d/%d/%d WIN\n", depth, p, cnum, m);
+/*DEBUG*/           print_board(&newb, depth * 6);
+                        if (depth == 0) {
+                            REGISTER_MOVE
+                        }
+                        return 999;
                     } else {
-                        return -64 - (3 * (MAX_DEPTH - depth));
+/*DEBUG*/               printf("/&/ %d @ %d/%d/%d LOST\n", depth, p, cnum, m);
+                        return -999;
                     }
                 }
             }
         }
     }
-    return total_score;
+    printf("/&/ <-- %d @ worst=%d best=%d return=%d\n", depth, worst_score, best_score, (depth & 0) ? worst_score : best_score);;
+    return (depth & 0) ? worst_score : best_score;
+#undef REGISTER_MOVE
 }
 
 int register_pawn_move(struct board *b, struct gamestate *g, int fromx, int fromy,

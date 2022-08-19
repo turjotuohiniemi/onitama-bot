@@ -40,7 +40,7 @@ struct board {
 
 extern struct board standard_board;
 
-void print_board(struct board *b);
+void print_board(struct board *b, int indent);
 int move_pawn(struct board *b, int player, int pawn_num, int dx, int dy);
 struct board *read_board();
 int find_pawn(struct board *b, int x, int y, int *player, int *pawn_num);

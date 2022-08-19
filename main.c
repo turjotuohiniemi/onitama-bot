@@ -50,10 +50,15 @@ int main(int argc, char *argv[]) {
         } else {
             printf("Playing card '%s' on pawn at [%d, %d], move to [%d, %d]\n", cardname,
                    movefrom.x, movefrom.y, movefrom.x + movediff.x, movefrom.y + movediff.y);
-            register_pawn_move(b, g, movefrom.x, movefrom.y, movefrom.x + movediff.x,
-                               movefrom.y + movediff.y, cardname);
+            int retval = register_pawn_move(b, g, movefrom.x, movefrom.y,
+                                            movefrom.x + movediff.x, movefrom.y + movediff.y,
+                                            cardname);
             print_board(b, 0);
             dump_gamestate(g);
+            if (retval > 0) {
+                puts("I won, game over");
+                return EXIT_SUCCESS;
+            }
         }
         while (opponent_move(b, g) == -1) {
         }

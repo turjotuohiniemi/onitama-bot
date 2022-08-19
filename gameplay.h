@@ -3,7 +3,7 @@
 
 #include "board.h"
 
-#define MAX_DEPTH (6)
+#define MAX_DEPTH (2)
 
 typedef struct card *player_cardptr;
 
@@ -18,8 +18,9 @@ extern int move_counter;
 struct gamestate *read_gamestate();
 void dump_gamestate(struct gamestate *g);
 int analyze_game(struct coord *movefrom, struct movement *moveto, char **cardname, int depth,
-                 int origplayer, struct gamestate *g, struct board *b);
+                 int mycolor, struct gamestate *g, struct board *b);
 int register_pawn_move(struct board *b, struct gamestate *g, int fromx, int fromy,
                        int tox, int toy, const char *cardname);
+int calc_score(struct board *b, int mycolor);
 
 #endif

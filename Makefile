@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS += -Wall -pedantic -O2
+CFLAGS += -Wall -pedantic
 OBJS = main.o board.o cards.o gameplay.o
 
 .PHONY: clean runtest
@@ -9,6 +9,9 @@ onitama: $(OBJS)
 
 dumpcards: cards.o dumpcards.o
 	$(CC) -o dumpcards cards.o dumpcards.o
+
+evalboard: board.o gameplay.o evalboard.o cards.o
+	$(CC) -o evalboard board.o gameplay.o evalboard.o cards.o
 
 clean:
 	rm -f onitama dumpcards *.o .*.dep
